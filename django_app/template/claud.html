@@ -1,0 +1,531 @@
+from django.db import models
+from django.contrib.auth.models import User
+#from creditcards.models import CardNumberField,SecurityCodeField,CardExpiryField
+# Create your models here.
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = 'categories'
+
+
+class Customer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer', related_query_name='customer', null=True, blank=True)
+    name = models.CharField(max_length=200, blank=True, default='')
+    email = models.EmailField(max_length=200, blank=True, default='')
+    phone = models.CharField(max_length=200, blank=True, default='')
+    address = models.CharField(max_length=400, blank=True, default='')
+
+    def __str__(self):
+        return self.name or ''
+
+
+class Product(models.Model):
+    name = models.CharField(max_length=150, blank=True, default='')
+    img = models.ImageField(upload_to='pics')
+    desc = models.TextField(max_length=250, blank=True, default='')
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+    offer = models.BooleanField(default=False)
+    sale_price = models.DecimalField(default=0, decimal_places=2, max_digits=8)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    digital = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.name} - {self.price} - {self.sale_price}'
+
+    @property
+    def imgURL(self):
+        if self.img:
+            return self.img.url
+        return ''
+
+
+class Order(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True)
+    #user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    date_ordered = models.DateTimeField(auto_now_add=True)
+    complete = models.BooleanField(default=False)
+    transaction_id = models.CharField(max_length=200, blank=True, default='')
+
+    @property
+    def shipping(self):
+        return any(not item.product.digital for item in self.orderitems_set.all() if item.product)
+
+    @property
+    def get_cart_total(self):
+        return sum(item.get_total for item in self.orderitems_set.all())
+
+    @property
+    def get_cart_items(self):
+        return sum(item.quantity for item in self.orderitems_set.all())
+
+    def __str__(self):
+        return f'{self.customer} + {self.date_ordered}'
+
+
+class OrderItems(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, blank=True, null=True)
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True)
+    quantity = models.IntegerField(default=0, blank=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.product:
+            return f'{self.date_added} + {self.product.name}+{self.product.price}+ {self.product.sale_price} + {self.quantity} + {self.order}'
+        return f'{self.date_added} + [deleted product] + {self.quantity} + {self.order}'
+
+    @property
+    def get_total(self):
+        if not self.product:
+            return 0
+        if self.product.offer:
+            return self.product.sale_price * self.quantity
+        return self.product.price * self.quantity
+
+
+class ShippingAddress(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, blank=True, null=True)
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True)
+    address = models.CharField(max_length=200, blank=True, default='')
+    city = models.CharField(max_length=200, blank=True, default='')
+    phone = models.CharField(max_length=200, blank=True, default='')
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        customer_name = self.customer.name if self.customer else 'N/A'
+        return f'{customer_name} + {self.date_added} + {self.address} + {self.order} + {self.city}'
+
+
+"""
+    card_number = CardNumberField()
+    expire = CardExpiryField()
+    security_code = SecurityCodeField()
+"""
+
+
+
+
+ظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظظ
+
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpResponse
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.core.exceptions import ObjectDoesNotExist
+from django.views.decorators.csrf import csrf_exempt
+import json
+import datetime
+
+from .models import Category, Product, Customer, Order, OrderItems, ShippingAddress
+from .utils import cookieCart, cartData, guestOrder
+
+# Create your views here.
+
+
+def index(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+
+    ducts = Product.objects.all()
+    return render(request, 'index.html', {'ducts': ducts, 'cartItems': cartItems})
+
+
+def cart(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+    return render(request, 'cart.html', {'items': items, 'order': order, 'cartItems': cartItems})
+
+
+def empty_cart(request):
+    data = cartData(request)
+    order = data['order']
+
+    if request.user.is_authenticated:
+        OrderItems.objects.filter(order=order).delete()
+        messages.success(request, "empty cart")
+        return redirect('index')
+
+    else:
+        response = redirect('index')
+        response.delete_cookie('cart')
+        messages.success(request, "cart emptied")
+        return response
+
+
+def checkout(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
+    return render(request, 'checkout.html', {'items': items, 'order': order, 'cartItems': cartItems})
+
+
+def updateItem(request):
+    try:
+        data = json.loads(request.body)
+        productId = data['productId']
+        action = data['action']
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'error': 'Invalid request data'}, status=400)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'You must be logged in to update the cart'}, status=401)
+
+    try:
+        product = Product.objects.get(id=productId)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
+
+    customer = request.user.customer
+    order, created = Order.objects.get_or_create(customer=customer, complete=False)
+    orderItem, created = OrderItems.objects.get_or_create(order=order, product=product)
+
+    if action == 'add':
+        orderItem.quantity += 1
+    elif action == 'remove':
+        orderItem.quantity -= 1
+
+    if orderItem.quantity <= 0:
+        orderItem.delete()
+    else:
+        orderItem.save()
+
+    return JsonResponse('Item Was Added successfully', safe=False)
+
+
+def processOrder(request):
+    transaction_id = datetime.datetime.now().timestamp()
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid request data'}, status=400)
+
+    if request.user.is_authenticated:
+        customer = request.user.customer
+        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+    else:
+        customer, order = guestOrder(request, data)
+
+    try:
+        total = float(data['form']['total'])
+    except (KeyError, ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid order total'}, status=400)
+
+    order.transaction_id = transaction_id
+
+    if total == float(order.get_cart_total):
+        order.complete = True
+    order.save()
+
+    if not order.shipping:
+        ShippingAddress.objects.create(
+            customer=customer,
+            order=order,
+            address=data['shipping']['address'],
+            city=data['shipping']['city'],
+            phone=data['shipping']['phone'],
+        )
+
+    return JsonResponse('Payment Complete!', safe=False)
+
+
+def search(request):
+    if request.method == "POST":
+        searched = request.POST.get('searched', '')
+        products = Product.objects.filter(name__contains=searched)
+        return render(request, 'search.html', {'searched': searched, 'products': products})
+    else:
+        return render(request, 'search.html', {})
+
+
+def category(request, foo):
+    # replace hyphens with spaces
+    foo = foo.replace('-', ' ')
+    try:
+        cat = Category.objects.get(name=foo)
+    except Category.DoesNotExist:
+        messages.success(request, "That category doesn't exist")
+        return redirect('index')
+
+    ducts = Product.objects.filter(category=cat)
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
+    return render(request, 'category.html', {'ducts': ducts, 'category': cat, 'items': items, 'order': order, 'cartItems': cartItems})
+
+
+def home(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+
+    ducts = Product.objects.all()
+    return render(request, 'home.html', {'ducts': ducts, 'cartItems': cartItems})
+
+
+def about(request):
+    return render(request, 'about.html')
+
+
+def payment(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
+    return render(request, 'payment.html', {'items': items, 'order': order, 'cartItems': cartItems})
+
+
+def confirm_payment(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
+    if request.method == "POST" and request.user.is_authenticated:
+        order.complete = True
+        order.save()
+
+    return render(request, 'confirm_payment.html', {'items': items, 'order': order, 'cartItems': cartItems})
+
+
+def contact(request):
+    if request.method == 'POST':
+        name = request.POST.get('full-name', '')
+        email = request.POST.get('email', '')
+        subject = request.POST.get('subject', '(no subject)')
+        message_text = request.POST.get('message', '')
+
+        body = 'New message:{}\nFrom:{}'.format(message_text, email)
+
+        send_mail(
+            subject,
+            body,
+            None,
+            ['enghudaismail@gmail.com'],
+        )
+
+        return HttpResponse("Email sent successfully")
+
+    return render(request, 'contact.html', {})
+
+ممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممممم
+/utils/
+
+
+import json
+
+from .models import Product, Customer, Order, OrderItems
+
+
+def cookieCart(request):
+    try:
+        cart = json.loads(request.COOKIES['cart'])
+    except (KeyError, json.JSONDecodeError):
+        cart = {}
+
+    items = []
+    order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
+    cartItems = order['get_cart_items']
+
+    for i in cart:
+        try:
+            product = Product.objects.get(id=i)
+        except (Product.DoesNotExist, KeyError):
+            continue
+
+        quantity = cart[i]["quantity"]
+        cartItems += quantity
+        total = product.sale_price * quantity
+        order['get_cart_total'] += total
+        order['get_cart_items'] += quantity
+
+        item = {
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'price': product.price,
+                'imageURL': product.imgURL,
+            },
+            'quantity': quantity,
+            'get_total': total
+        }
+        items.append(item)
+
+        if not product.digital:
+            order['shipping'] = True
+
+    return {'cartItems': cartItems, 'order': order, 'items': items}
+
+
+def cartData(request):
+    if request.user.is_authenticated:
+        customer = request.user.customer
+        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+        items = order.orderitems_set.all()
+        cartItems = order.get_cart_items
+    else:
+        cookieData = cookieCart(request)
+        cartItems = cookieData['cartItems']
+        order = cookieData['order']
+        items = cookieData['items']
+
+    return {'cartItems': cartItems, 'order': order, 'items': items}
+
+
+def guestOrder(request, data):
+    name = data['form']['name']
+    email = data['form']['email']
+    phone = data['form']['phone']
+    address = data['form']['address']
+
+    cookieData = cookieCart(request)
+    items = cookieData['items']
+
+    customer, created = Customer.objects.get_or_create(
+        email=email,
+        defaults={
+            'name': name,
+            'phone': phone,
+            'address': address,
+        },
+    )
+
+    if not created:
+        customer.name = name
+        customer.phone = phone
+        customer.address = address
+        customer.save()
+
+    order = Order.objects.create(
+        customer=customer,
+        complete=False,
+    )
+
+    for item in items:
+        try:
+            product = Product.objects.get(id=item['product']['id'])
+        except Product.DoesNotExist:
+            continue
+
+        OrderItems.objects.create(
+            product=product,
+            order=order,
+            quantity=item['quantity'],
+        )
+
+    return customer, order
+
+jjjjjsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+
+console.log('hi');
+//alert('hii');
+
+const icon = document.querySelector('.icon');
+if (icon) {
+	icon.addEventListener('click', () => {
+		document.querySelector('.menu').classList.toggle('show');
+	});
+}
+
+const scrollBtn = document.querySelector('.scroll-top');
+
+if (scrollBtn) {
+	window.addEventListener('scroll', function () {
+		if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+			scrollBtn.style.display = "block";
+		} else {
+			scrollBtn.style.display = "none";
+		}
+	});
+
+	scrollBtn.addEventListener('click', () => {
+		document.documentElement.scrollTop = 0;
+	});
+}
+
+
+// cart update buttons
+var updateButtons = document.getElementsByClassName('update-cart');
+
+for (var i = 0; i < updateButtons.length; i++) {
+	updateButtons[i].addEventListener('click', function () {
+		var productId = this.dataset.product;
+		var action = this.dataset.action;
+		console.log('productId:', productId, 'action:', action);
+		console.log('USER:', user);
+
+		if (user === 'AnonymousUser') {
+			addCookieItem(productId, action);
+		} else {
+			updateUserOrder(productId, action);
+		}
+	});
+}
+
+
+function addCookieItem(productId, action) {
+	console.log('Not Logged in.....');
+
+	if (action === 'add') {
+		if (cart[productId] === undefined) {
+			cart[productId] = { 'quantity': 1 };
+		} else {
+			cart[productId]['quantity'] += 1;
+		}
+	}
+
+	if (action === 'remove') {
+		if (cart[productId] !== undefined) {
+			cart[productId]['quantity'] -= 1;
+			if (cart[productId]['quantity'] <= 0) {
+				console.log('Remove Item');
+				delete cart[productId];
+			}
+		}
+	}
+
+	console.log('Cart:', cart);
+	document.cookie = 'cart=' + JSON.stringify(cart) + ";path=/";
+	location.reload();
+}
+
+
+function updateUserOrder(productId, action) {
+	console.log('User is logged in, sending data.');
+	var url = '/update_item/';
+
+	fetch(url, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRFToken': csrftoken,
+		},
+		body: JSON.stringify({ 'productId': productId, 'action': action }),
+	})
+		.then((response) => {
+			if (!response.ok) {
+				return response.json().then((err) => {
+					throw new Error(err.error || 'Request failed');
+				});
+			}
+			return response.json();
+		})
+		.then((data) => {
+			console.log('data:', data);
+			location.reload();
+		})
+		.catch((error) => {
+			console.error('Error updating cart:', error);
+		});
+}

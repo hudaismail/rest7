@@ -1,0 +1,1251 @@
+```css
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+```
+jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj
+```html
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        http-equiv="X-UA-Compatible"
+        content="IE=edge">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="Jadeer online food delivery - Sokhna delivery">
+
+    <meta
+        name="theme-color"
+        content="#D35400">
+
+    <title>Jadeer | Online Food Delivery</title>
+
+
+    <!-- FAVICON -->
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="{% static 'image/gpt2.png' %}">
+
+
+    <!-- MAIN CSS -->
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/style.css' %}?v=10">
+
+
+    <!-- FONT AWESOME -->
+
+    <link
+        rel="stylesheet"
+        href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     SCROLL TOP
+===================================================== -->
+
+<div
+    class="scroll-top"
+    aria-label="Back to top">
+
+    ↑
+
+</div>
+
+
+
+<!-- =====================================================
+     HEADER / NAVBAR
+===================================================== -->
+
+<header class="container">
+
+    {% block nav %}
+
+    <nav>
+
+
+        <!-- LOGO -->
+
+        <div class="logo">
+
+            <a href="{% url 'index' %}">
+
+                <img
+                    src="{% static 'image/gpt2.png' %}"
+                    alt="Jadeer">
+
+            </a>
+
+        </div>
+
+
+
+        <!-- MENU -->
+
+        <div
+            class="menu"
+            id="mainMenu">
+
+
+            <div class="menu1">
+
+                <a href="home">
+                    Home
+                </a>
+
+                <a href="about">
+                    About
+                </a>
+
+                <a href="contact">
+                    Contact
+                </a>
+
+                <a
+                    href="makeyourorder"
+                    class="makeyourorder">
+
+                    Make Your Order
+
+                </a>
+
+            </div>
+
+
+
+            <!-- CATEGORY -->
+
+            <div class="dropdown">
+
+                <button
+                    class="dropbtn"
+                    id="categoryBtn"
+                    type="button">
+
+                    Category
+
+                    <i
+                        class="fa fa-caret-down"
+                        aria-hidden="true">
+                    </i>
+
+                </button>
+
+
+                <div
+                    class="dropdown-content"
+                    id="categoryMenu">
+
+
+                    <a href="{% url 'index' %}">
+                        All Products
+                    </a>
+
+
+                    <a href="{% url 'category' 'sea food' %}">
+                        Sea Food
+                    </a>
+
+
+                    <a href="{% url 'category' 'oriental cuisin' %}">
+                        Oriental Food
+                    </a>
+
+
+                    <a href="{% url 'category' 'fast food meals' %}">
+                        Fast Food Meals
+                    </a>
+
+
+                    <a href="{% url 'category' 'dessert' %}">
+                        Dessert
+                    </a>
+
+
+                    <a href="{% url 'category' 'bakery' %}">
+                        Bakery
+                    </a>
+
+
+                    <a href="{% url 'category' 'mix' %}">
+                        Mix
+                    </a>
+
+
+                </div>
+
+            </div>
+
+
+
+            <!-- LOGIN / REGISTER -->
+
+            <div class="reg">
+
+                {% if user.is_authenticated %}
+
+                    <span class="welcome-user">
+                        Hello : {{ user.first_name }}
+                    </span>
+
+                    <a href="account/logout">
+                        Logout
+                    </a>
+
+                {% else %}
+
+                    <a href="account/login">
+                        Sign in
+                    </a>
+
+                    <a href="account/register">
+                        Sign up
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- MOBILE BUTTON -->
+
+        <button
+            class="icon"
+            id="menuButton"
+            type="button"
+            aria-label="Open menu"
+            aria-expanded="false">
+
+            <img
+                src="{% static 'image/menu.png' %}"
+                alt="Menu">
+
+        </button>
+
+
+    </nav>
+
+    {% endblock %}
+
+</header>
+
+
+
+<!-- =====================================================
+     CART + SEARCH
+===================================================== -->
+
+{% block nav1 %}
+
+<section class="nav1">
+
+
+    <!-- CART -->
+
+    <div class="cart">
+
+        <a
+            href="cart"
+            aria-label="Shopping cart">
+
+            <i
+                class="fa fa-shopping-cart"
+                aria-hidden="true">
+            </i>
+
+            <span>
+                {{ cartItems }}
+            </span>
+
+        </a>
+
+    </div>
+
+
+
+    <!-- SEARCH -->
+
+    <div class="search">
+
+        <form
+            class="form-search"
+            method="POST"
+            action="{% url 'search' %}">
+
+            {% csrf_token %}
+
+
+            <i
+                class="fa fa-search"
+                aria-hidden="true">
+            </i>
+
+
+            <input
+                type="search"
+                name="searched"
+                placeholder="Search..."
+                autocomplete="off"
+                aria-label="Search products">
+
+
+            <button type="submit">
+                Search
+            </button>
+
+
+        </form>
+
+    </div>
+
+
+</section>
+
+{% endblock %}
+
+
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+{% block main %}
+
+<main>
+
+    <div class="main">
+
+
+        <!-- =================================================
+             SLIDER
+        ================================================== -->
+
+        <section
+            class="slider"
+            aria-label="Jadeer food">
+
+            <div class="slides">
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img9-1.jpeg' %}"
+                        alt="Jadeer food delivery"
+                        loading="eager">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img3-1.jpg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img1.jpg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img3.jpg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img2.jpg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img4.jpg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img5.jpg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img9-1.jpeg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img8-1.jpg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+                <div class="slide">
+
+                    <img
+                        src="{% static 'image/img4-1.jpg' %}"
+                        alt="Food"
+                        loading="lazy">
+
+                </div>
+
+
+            </div>
+
+
+            <!-- SLIDER BUTTONS -->
+
+            <div class="navigation">
+
+                <button
+                    class="prev"
+                    type="button"
+                    aria-label="Previous slide">
+
+                    ❮
+
+                </button>
+
+
+                <button
+                    class="next"
+                    type="button"
+                    aria-label="Next slide">
+
+                    ❯
+
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             PRODUCTS
+        ================================================== -->
+
+        <section
+            class="container1"
+            aria-label="Products">
+
+
+            <div class="row">
+
+
+                {% for duct in ducts %}
+
+
+                <article class="column">
+
+
+                    <!-- PRODUCT IMAGE -->
+
+                    <div class="img">
+
+                        <img
+                            src="{{ duct.img.url }}"
+                            alt="{{ duct.name }}"
+                            loading="lazy">
+
+                    </div>
+
+
+                    <!-- PRODUCT NAME -->
+
+                    <h2>
+                        {{ duct.name }}
+                    </h2>
+
+
+                    <!-- DESCRIPTION -->
+
+                    <p class="product-description">
+                        {{ duct.desc }}
+                    </p>
+
+
+                    <!-- PRICE -->
+
+                    {% if duct.offer %}
+
+                        <h2 class="price">
+
+                            <del>
+                                LE {{ duct.price }}
+                            </del>
+
+                            <span>
+                                LE {{ duct.sale_price }}
+                            </span>
+
+                        </h2>
+
+
+                        <div class="sale">
+                            * SALE *
+                        </div>
+
+                    {% else %}
+
+                        <h2 class="price">
+                            LE {{ duct.price }}
+                        </h2>
+
+                    {% endif %}
+
+
+
+                    <!-- CART BUTTONS -->
+
+                    <div class="quantity">
+
+
+                        <!-- ADD -->
+
+                        <button
+                            type="button"
+                            data-product="{{ duct.id }}"
+                            data-action="add"
+                            class="update-cart add-btn"
+                            aria-label="Add {{ duct.name }} to cart">
+
+                            <i
+                                class="fa fa-shopping-cart"
+                                aria-hidden="true">
+                            </i>
+
+                        </button>
+
+
+                        <!-- REMOVE -->
+
+                        <button
+                            type="button"
+                            data-product="{{ duct.id }}"
+                            data-action="remove"
+                            class="update-cart chg-quantity"
+                            aria-label="Remove {{ duct.name }} from cart">
+
+                            <i
+                                class="fa fa-trash"
+                                aria-hidden="true">
+                            </i>
+
+                        </button>
+
+
+                    </div>
+
+
+                </article>
+
+
+                {% empty %}
+
+
+                <div class="empty-products">
+
+                    <h2>
+                        No products available.
+                    </h2>
+
+                </div>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+        </section>
+
+
+    </div>
+
+</main>
+
+{% endblock %}
+
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+{% block footer %}
+
+<footer>
+
+
+    <div class="foot">
+
+
+        <!-- LEFT -->
+
+        <div class="footleft">
+
+            <h2>
+                Jadeer
+            </h2>
+
+            <p>
+                Sokhna Delivery
+                <br>
+                You find all your needs with us.
+            </p>
+
+
+            <img
+                src="{% static 'image/gpt2.png' %}"
+                alt="Jadeer logo"
+                loading="lazy">
+
+        </div>
+
+
+
+        <!-- CENTER -->
+
+        <div class="footcenter">
+
+            <p>
+                <i
+                    class="fa fa-map-marker"
+                    aria-hidden="true">
+                </i>
+
+                Jadeer Online Now
+            </p>
+
+
+            <p>
+
+```
+jssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+
+      ```javascript
+'use strict';
+
+console.log('Jadeer main.js loaded');
+
+
+// =====================================================
+// MOBILE MENU
+// =====================================================
+
+const menuButton = document.querySelector('#menuButton');
+const mainMenu = document.querySelector('#mainMenu');
+
+if (menuButton && mainMenu) {
+
+    menuButton.addEventListener('click', function (event) {
+
+        event.stopPropagation();
+
+        const isOpen =
+            mainMenu.classList.toggle('show');
+
+        menuButton.setAttribute(
+            'aria-expanded',
+            isOpen ? 'true' : 'false'
+        );
+
+    });
+
+
+    // Close menu when clicking a normal menu link
+    mainMenu.querySelectorAll('a').forEach(function (link) {
+
+        link.addEventListener('click', function () {
+
+            mainMenu.classList.remove('show');
+
+            menuButton.setAttribute(
+                'aria-expanded',
+                'false'
+            );
+
+        });
+
+    });
+
+}
+
+
+// =====================================================
+// CATEGORY DROPDOWN
+// =====================================================
+
+const categoryButton =
+    document.querySelector('#categoryBtn');
+
+const categoryMenu =
+    document.querySelector('#categoryMenu');
+
+
+if (categoryButton && categoryMenu) {
+
+    categoryButton.addEventListener(
+        'click',
+        function (event) {
+
+            event.stopPropagation();
+
+            categoryMenu.classList.toggle(
+                'category-show'
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// CLOSE MENUS WHEN CLICKING OUTSIDE
+// =====================================================
+
+document.addEventListener(
+    'click',
+    function (event) {
+
+        // Mobile menu
+        if (
+            mainMenu &&
+            menuButton &&
+            !mainMenu.contains(event.target) &&
+            !menuButton.contains(event.target)
+        ) {
+
+            mainMenu.classList.remove('show');
+
+            menuButton.setAttribute(
+                'aria-expanded',
+                'false'
+            );
+
+        }
+
+
+        // Category menu
+        if (
+            categoryMenu &&
+            categoryButton &&
+            !categoryMenu.contains(event.target) &&
+            !categoryButton.contains(event.target)
+        ) {
+
+            categoryMenu.classList.remove(
+                'category-show'
+            );
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// SCROLL TO TOP
+// =====================================================
+
+const scrollButton =
+    document.querySelector('.scroll-top');
+
+
+if (scrollButton) {
+
+    function updateScrollButton() {
+
+        if (window.scrollY > 250) {
+
+            scrollButton.classList.add(
+                'scroll-visible'
+            );
+
+        } else {
+
+            scrollButton.classList.remove(
+                'scroll-visible'
+            );
+
+        }
+
+    }
+
+
+    window.addEventListener(
+        'scroll',
+        updateScrollButton,
+        { passive: true }
+    );
+
+
+    scrollButton.addEventListener(
+        'click',
+        function () {
+
+            window.scrollTo({
+
+                top: 0,
+
+                behavior: 'smooth'
+
+            });
+
+        }
+    );
+
+
+    updateScrollButton();
+
+}
+
+
+// =====================================================
+// CART BUTTONS
+// =====================================================
+
+const updateButtons =
+    document.querySelectorAll(
+        '.update-cart'
+    );
+
+
+updateButtons.forEach(function (button) {
+
+    button.addEventListener(
+        'click',
+        function () {
+
+            const productId =
+                this.dataset.product;
+
+            const action =
+                this.dataset.action;
+
+
+            console.log(
+                'Product:',
+                productId,
+                '| Action:',
+                action
+            );
+
+
+            // Validate button
+            if (!productId || !action) {
+
+                console.error(
+                    'Missing product ID or action.'
+                );
+
+                return;
+
+            }
+
+
+            // Prevent double-click
+            if (this.dataset.loading === 'true') {
+
+                return;
+
+            }
+
+
+            this.dataset.loading = 'true';
+
+
+            // Guest
+            if (
+                typeof user !== 'undefined' &&
+                user === 'AnonymousUser'
+            ) {
+
+                addCookieItem(
+                    productId,
+                    action
+                );
+
+            }
+
+            // Logged-in user
+            else {
+
+                updateUserOrder(
+                    productId,
+                    action,
+                    this
+                );
+
+            }
+
+        }
+    );
+
+});
+
+
+// =====================================================
+// COOKIE CART
+// =====================================================
+
+function addCookieItem(
+    productId,
+    action
+) {
+
+    console.log(
+        'Guest cart update'
+    );
+
+
+    // Make sure cart exists
+    if (
+        typeof cart === 'undefined' ||
+        cart === null ||
+        typeof cart !== 'object'
+    ) {
+
+        cart = {};
+
+    }
+
+
+    // ADD
+    if (action === 'add') {
+
+        if (
+            !cart[productId] ||
+            typeof cart[productId] !== 'object'
+        ) {
+
+            cart[productId] = {
+                quantity: 1
+            };
+
+        } else {
+
+            cart[productId].quantity += 1;
+
+        }
+
+    }
+
+
+    // REMOVE
+    else if (action === 'remove') {
+
+        if (cart[productId]) {
+
+            cart[productId].quantity -= 1;
+
+
+            if (
+                cart[productId].quantity <= 0
+            ) {
+
+                delete cart[productId];
+
+            }
+
+        }
+
+    }
+
+
+    // Invalid action
+    else {
+
+        console.error(
+            'Invalid cart action:',
+            action
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        'Updated cart:',
+        cart
+    );
+
+
+    // Save cookie
+    document.cookie =
+        'cart=' +
+        encodeURIComponent(
+            JSON.stringify(cart)
+        ) +
+        ';path=/';
+
+
+    // Refresh
+    window.location.reload();
+
+}
+
+
+// =====================================================
+// LOGGED-IN CART
+// =====================================================
+
+async function updateUserOrder(
+    productId,
+    action,
+    button
+) {
+
+    console.log(
+        'Logged-in user cart update'
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                '/update_item/',
+                {
+
+                    method: 'POST',
+
+                    headers: {
+
+                        'Content-Type':
+                            'application/json',
+
+                        'X-CSRFToken':
+                            typeof csrftoken !== 'undefined'
+                                ? csrftoken
+                                : '',
+
+                        'X-Requested-With':
+                            'XMLHttpRequest'
+
+                    },
+
+                    body: JSON.stringify({
+
+                        productId:
+                            productId,
+
+                        action:
+                            action
+
+                    })
+
+                }
+            );
+
+
+        console.log(
+            'HTTP status:',
+            response.status
+        );
+
+
+        // Server error
+        if (!response.ok) {
+
+            throw new Error(
+                `Server returned ${response.status}`
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            'Server response:',
+            data
+        );
+
+
+        // Django returned an error
+        if (data.error) {
+
+            console.error(
+                'Django error:',
+                data.error
+            );
+
+            alert(data.error);
+
+            return;
+
+        }
+
+
+        // Success
+        window.location.reload();
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            'Cart update failed:',
+            error
+        );
+
+
+        alert(
+            'Unable to update the cart. Please try again.'
+        );
+
+    }
+
+
+    finally {
+
+        if (button) {
+
+            button.dataset.loading =
+                'false';
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// SLIDER
+// =====================================================
+
+const slider =
+    document.querySelector('.slides');
+
+const slideItems =
+    document.querySelectorAll('.slide');
+
+const previousButton =
+    document.querySelector('.prev');
+
+const nextButton =
+    document.querySelector('.next');
+
+
+let currentSlide = 0;
+
+
+function showSlide(index) {
+
+    if (
+        !slider ||
+        slideItems.length === 0
+    ) {
+
+        return;
+
+    }
+
+
+    if (index >= slideItems.length) {
+
+        currentSlide = 0;
+
+    }
+
+    else if (index < 0) {
+
+        currentSlide =
+            slideItems.length - 1;
+
+    }
+
+    else {
+
+        currentSlide = index;
+
+    }
+
+
+    slider.style.transform =
+        `translateX(-${currentSlide * 100}%)`;
+
+}
+
+
+if (previousButton) {
+
+    previousButton.addEventListener(
+        'click',
+        function () {
+```
