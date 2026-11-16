@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, auth
 from .helpers import send_forgot_password_mail
+from todo_list.models import Customer
+from django.contrib.auth.forms import UserCreationForm
 import uuid
 from .models import Profile
 
@@ -42,6 +44,7 @@ def register(request):
             else:
                 user = User.objects.create_user(username=username, password=password1, email=email, first_name=first_name, last_name=last_name )
                 user.save()
+                #Customer.objects.create_user(user=user, name=user.username, email=user.email)
                 print('user created')
                 return redirect('login')
 
