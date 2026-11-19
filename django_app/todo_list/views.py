@@ -100,9 +100,12 @@ def processOrder(request):
 
     if total == float(order.get_cart_total):
         order.complete = True
-    order.save()
+        order.save()
 
     if order.shipping == True:
+        customer.phone = data['shipping']['phone']
+        customer.address = data['shipping']['address']
+        customer.save()
         ShippingAddress.objects.create(
             customer=customer,
             order=order,
